@@ -1,30 +1,52 @@
-import { useEffect, useState } from 'react'
+import { Meta, Step } from './models'
 
-import { useWindowSize } from '@docusaurus/theme-common'
-import { useLocation } from '@docusaurus/router'
+export function getMetaData(): Meta[] {
+  const context = require.context('@site/tutorials/', true)
 
-export function useIsMobile() {
-  const windowSize = useWindowSize()
-  const check = () => windowSize === 'mobile'
+  const meta = context
+    .keys()
+    .filter((key) => key.endsWith('meta.json'))
+    .map((key) => {
+      const [_, tutorial, file] = key.split('/')
 
-  const [isMobile, setIsMobile] = useState(() => check())
+      // If the file is not in a tutorial directory, ignore it
+      if (file === undefined) {
+        return null
+      }
 
-  useEffect(() => {
-    setIsMobile(check())
-  }, [windowSize])
+      const meta = context(key)
+      meta.id = tutorial
+      return meta
+    })
+    .filter((meta) => meta !== null)
+    .map((meta) => Meta.parse(meta))
 
-  return isMobile
+  return meta
 }
 
-export function useIsTutorial() {
-  const location = useLocation()
-  const check = () => location.pathname.includes('/tutorials')
+// Get the sorted steps for a tutorial with the given id
+export function getSteps(id: string): Step[] {
+  console.log(id)
+  const context = require.context('@site/tutorials/', true)
 
-  const [isTutorial, setIsTutorial] = useState(() => check())
+  // Filter to ones that are in the `tutorialname` dir
+  const steps = context
+    .keys()
+    .filter((key) => key.includes(id) && key.endsWith('md'))
+    .map((key) => [key, context(key)])
+    .map(([path, mdFile]) =>
+      Step.parse({ ...mdFile.frontMatter, path: pathToHistory(path) })
+    )
 
-  useEffect(() => {
-    setIsTutorial(check())
-  }, [location])
+  steps.sort((a, b) => a.position - b.position)
 
-  return isTutorial
+  return steps
+}
+
+function pathToHistory(path: string): string {
+  let stepPath = path.split('/')
+  let [_, tutorial, file] = stepPath
+  file = file === 'index.md' ? '' : file.replace('.md', '')
+
+  return `/tutorials/${tutorial}/${file}`
 }

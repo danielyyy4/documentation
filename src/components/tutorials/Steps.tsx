@@ -1,11 +1,10 @@
 import React, { useEffect, useRef } from 'react'
 
+import { useTheme } from '@emotion/react'
 import { grey } from '@mui/material/colors'
-import LastUpdated from '@theme/LastUpdated'
 import { useHistory, useLocation } from '@docusaurus/router'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCheckCircle, faCircle } from '@fortawesome/free-regular-svg-icons'
-import { useTheme } from '@emotion/react'
 import {
   Box,
   Grid,
@@ -24,8 +23,12 @@ function ListIcon({
   activePosition,
 }: {
   selfPosition: number
-  activePosition: number
+  activePosition?: number
 }): JSX.Element {
+  if (!activePosition) {
+    return <FontAwesomeIcon size="lg" icon={faCircle} />
+  }
+
   const theme = useTheme()
   const transform = { transform: 'translateY(-1px)' }
 
@@ -57,21 +60,13 @@ function ListIcon({
   }
 }
 
-export function stepToHistory(step: Step): string {
-  let path = step.path.split('/')
-  let [_, tutorial, file] = path
-  file = file === 'index.md' ? '' : file.replace('.md', '')
-
-  return `/tutorials/${tutorial}/${file}`
-}
-
 export default function Steps({
   steps,
   activeStep,
   setActiveStep,
 }: {
   steps: Step[]
-  activeStep: Step
+  activeStep: Step | null
   setActiveStep: (step: Step) => void
 }): JSX.Element {
   const history = useHistory()
@@ -111,7 +106,7 @@ export default function Steps({
             <ListItem
               key={step.position}
               onClick={() => {
-                history.push(stepToHistory(step))
+                history.push(step.path)
                 setActiveStep(step)
               }}
               sx={{
@@ -119,11 +114,11 @@ export default function Steps({
                 borderRadius: 1,
                 marginY: 1,
                 backgroundColor:
-                  activeStep.position === step.position
+                  activeStep?.position === step.position
                     ? grey[200]
                     : 'var(--mui-palette-background-paper)',
                 color:
-                  activeStep.position === step.position
+                  activeStep?.position === step.position
                     ? 'primary.main'
                     : 'var(--mui-palette-text-primary)',
               }}
@@ -133,7 +128,7 @@ export default function Steps({
               >
                 <ListIcon
                   selfPosition={step.position}
-                  activePosition={activeStep.position}
+                  activePosition={activeStep?.position}
                 />
               </ListItemIcon>
               <ListItemText>

@@ -32,7 +32,7 @@ export type Step = z.infer<typeof Step>
 // Files is an array of strings that represent the file paths to the tutorial steps
 export const Tutorial = z.object({
   meta: Meta,
-  files: z.array(Step),
+  steps: z.array(Step),
 })
 
 export type Tutorial = z.infer<typeof Tutorial>

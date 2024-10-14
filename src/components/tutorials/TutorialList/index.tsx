@@ -16,9 +16,8 @@ import {
   Typography,
 } from '@mui/material'
 
-import { stepToHistory } from '../Steps'
 import { Grid as TutorialGrid } from './styledComponents'
-import { Step, Topic as TopicType, Tutorial } from '../models'
+import { Meta, Topic as TopicType, Tutorial } from '../models'
 import {
   Card,
   Description,
@@ -27,7 +26,8 @@ import {
   Topic,
 } from './styledComponents'
 
-import { useIsMobile } from '../utils'
+import { getMetaData, getSteps } from '../utils'
+import { useIsMobile } from '../hooks'
 
 function TutorialCard({ tutorial }: { tutorial: Tutorial }) {
   const history = useHistory()
@@ -38,7 +38,7 @@ function TutorialCard({ tutorial }: { tutorial: Tutorial }) {
           <Grid item>
             <Link
               style={{ color: 'inherit', cursor: 'pointer' }}
-              to={stepToHistory(getSteps(tutorial.meta.id)[0])}
+              to={getSteps(tutorial.meta.id)[0].path}
             >
               <Typography variant="h5" sx={{ fontSize: '18px', mb: 1 }}>
                 {tutorial.meta.title}
@@ -57,7 +57,7 @@ function TutorialCard({ tutorial }: { tutorial: Tutorial }) {
             onClick={() => {
               const steps = getSteps(tutorial.meta.id)
               const first = steps[0]
-              history.push(stepToHistory(first))
+              history.push(first.path)
             }}
             endIcon={<ChevronRight />}
           >
@@ -87,44 +87,29 @@ const TopicDropdownValues: TopicDropdown[] = [
   ...Object.values(TopicType.Values),
 ]
 
-function getSteps(id: string): Step[] {
-  const context = require.context('@site/tutorials/', true)
+export default function TutorialList() {
+  const isMobile = useIsMobile()
 
-  // Filter to ones that are in the `tutorialname` dir
-  const steps = context
-    .keys()
-    .filter((key) => key.includes(id) && key.endsWith('md'))
-    .map((key) => [key, context(key)])
-    .map(([path, mdFile]) => Step.parse({ ...mdFile.frontMatter, path }))
-
-  steps.sort((a, b) => a.position - b.position)
-
-  return steps
-}
-
-function TutorialList({
-  tutorials,
-}: {
-  tutorials: Record<string, Record<string, unknown>>
-}) {
   const [search, setSearch] = useState('')
   const [topic, setTopic] = useState<TopicDropdown>('All topics')
   const [parsedTutorials, setParsedTutorials] = useState<Tutorial[]>([])
-  const isMobile = useIsMobile()
+  const [tutorials, _] = useState<Meta[]>(() => getMetaData())
 
   useEffect(() => {
     setParsedTutorials(
-      Object.values(tutorials).map((data) => {
-        data.files = getSteps(data.meta.id)
-        const parsedTutorials = Tutorial.parse(data)
+      Object.values(tutorials).map((metaJson) => {
+        const meta = Meta.parse(metaJson)
+        const steps = getSteps(meta.id)
+        const tutorial = { meta, steps }
+        const parsedTutorials = Tutorial.parse(tutorial)
 
         // Ensure no duplicate positions
         const duplicates = new Set<number>()
-        for (const step of parsedTutorials.files) {
+        for (const step of parsedTutorials.steps) {
           if (duplicates.has(step.position)) {
             throw new Error(
               `Duplicate step position ${step.position} in tutorial "${parsedTutorials.meta.id}"` +
-                `\nCheck steps: \n${parsedTutorials.files
+                `\nCheck steps: \n${parsedTutorials.steps
                   .filter((s) => s.position === step.position)
                   .map((s) => s.path)
                   .join('\n')}\n`
@@ -165,23 +150,21 @@ function MobileTutorialList({
   parsedTutorials,
 }) {
   return (
-    <Layout>
-      <Box sx={{ mt: 1 }}>
-        <Grid container direction="column" rowSpacing={2}>
-          <SearchBar setSearch={setSearch} />
-          <TopicFilter topic={topic} setTopic={setTopic} />
+    <Box sx={{ mt: 1 }}>
+      <Grid container direction="column" rowSpacing={2}>
+        <SearchBar setSearch={setSearch} />
+        <TopicFilter topic={topic} setTopic={setTopic} />
 
-          {parsedTutorials
-            .filter((tutorial: Tutorial) => searchFilter(search, tutorial))
-            .filter((tutorial: Tutorial) => topicFilter(topic, tutorial))
-            .map((tutorial: Tutorial) => (
-              <Grid item>
-                <TutorialCard key={tutorial.meta.id} tutorial={tutorial} />
-              </Grid>
-            ))}
-        </Grid>
-      </Box>
-    </Layout>
+        {parsedTutorials
+          .filter((tutorial: Tutorial) => searchFilter(search, tutorial))
+          .filter((tutorial: Tutorial) => topicFilter(topic, tutorial))
+          .map((tutorial: Tutorial) => (
+            <Grid item>
+              <TutorialCard key={tutorial.meta.id} tutorial={tutorial} />
+            </Grid>
+          ))}
+      </Grid>
+    </Box>
   )
 }
 
@@ -193,27 +176,23 @@ function DesktopTutorialList({
   parsedTutorials,
 }) {
   return (
-    <Layout>
-      <Box marginX={8} marginY={3}>
-        <Grid container columnSpacing={2}>
-          <SearchBar setSearch={setSearch} />
-          <TopicFilter topic={topic} setTopic={setTopic} />
-        </Grid>
+    <Box marginX={8} marginY={3}>
+      <Grid container columnSpacing={2}>
+        <SearchBar setSearch={setSearch} />
+        <TopicFilter topic={topic} setTopic={setTopic} />
+      </Grid>
 
-        <TutorialGrid mb={2}>
-          {parsedTutorials
-            .filter((tutorial: Tutorial) => searchFilter(search, tutorial))
-            .filter((tutorial: Tutorial) => topicFilter(topic, tutorial))
-            .map((tutorial: Tutorial) => (
-              <TutorialCard key={tutorial.meta.id} tutorial={tutorial} />
-            ))}
-        </TutorialGrid>
-      </Box>
-    </Layout>
+      <TutorialGrid mb={2}>
+        {parsedTutorials
+          .filter((tutorial: Tutorial) => searchFilter(search, tutorial))
+          .filter((tutorial: Tutorial) => topicFilter(topic, tutorial))
+          .map((tutorial: Tutorial) => (
+            <TutorialCard key={tutorial.meta.id} tutorial={tutorial} />
+          ))}
+      </TutorialGrid>
+    </Box>
   )
 }
-
-export default TutorialList
 
 function SearchBar({ setSearch }) {
   return (

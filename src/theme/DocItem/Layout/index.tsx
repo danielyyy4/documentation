@@ -14,7 +14,7 @@ import type { Props } from '@theme/DocItem/Layout'
 
 import styles from './styles.module.css'
 import { Paper } from '@mui/material'
-import { useIsTutorial } from '@site/src/components/tutorials/utils'
+import { useTutorial, TutorialKind } from '@site/src/components/tutorials/hooks'
 
 /**
  * Decide if the toc should be rendered, on mobile or desktop viewports
@@ -42,7 +42,7 @@ function useDocTOC() {
 
 export default function DocItemLayout({ children }: Props): JSX.Element {
   const docTOC = useDocTOC()
-  const isTutorial = useIsTutorial()
+  const tutorial = useTutorial()
 
   return (
     <div className="row">
@@ -53,7 +53,7 @@ export default function DocItemLayout({ children }: Props): JSX.Element {
             <DocBreadcrumbs />
             <DocVersionBadge />
             {docTOC.mobile}
-            {isTutorial ? (
+            {tutorial === TutorialKind.Tutorial ? (
               <Paper sx={{ p: 4, pt: 3 }}>
                 <DocItemContent>{children}</DocItemContent>
               </Paper>

@@ -3,79 +3,76 @@ import React, { ReactNode, useEffect, useState } from 'react'
 import clsx from 'clsx'
 import { Location } from 'history'
 
-import { Box, Grid } from '@mui/material'
+import { Grid } from '@mui/material'
 import { useLocation } from '@docusaurus/router'
-import PaginatorNavLink from '@theme/PaginatorNavLink'
 import type { Props } from '@theme/DocPage/Layout/Main'
+import Steps from '@site/src/components/tutorials/Steps'
+import { Header } from '@site/src/components/tutorials/Header'
 import { useDocsSidebar } from '@docusaurus/theme-common/internal'
+import { Meta, Step } from '@site/src/components/tutorials/models'
+import { getSteps } from '@site/src/components/tutorials/utils'
+import { useIsMobile, useTutorial } from '@site/src/components/tutorials/hooks'
 
 import styles from './styles.module.css'
-import { Header } from '@site/src/components/tutorials/Header'
-import { Meta, Step } from '@site/src/components/tutorials/models'
-import {
-  useIsMobile,
-  useIsTutorial,
-} from '@site/src/components/tutorials/utils'
-import Steps, { stepToHistory } from '@site/src/components/tutorials/Steps'
+import { Paginators } from './Paginators'
+import { TutorialKind } from '../../../../components/tutorials/hooks'
 
 function getMeta(location: Location): Meta {
-  const locationSplit = location.pathname.split('/')
-  const tutorialName = locationSplit[2]
+  const [_, __, id] = location.pathname.split('/')
   const context = require.context('@site/tutorials/', true)
 
   try {
-    const meta = context(`./${tutorialName}/meta.json`)
-    meta['id'] = tutorialName
+    const meta = context(`./${id}/meta.json`)
+    meta['id'] = id
     return Meta.parse(meta)
   } catch (e) {
+    if (location.pathname === '/tutorials') {
+      return null
+    }
+
     throw new Error(
-      `Could not find meta.json for tutorial ${tutorialName}, location: ${location.pathname}`
+      `Could not find meta.json for tutorial ${id}, location: ${location.pathname}`
     )
   }
 }
 
-function getSteps(location: Location): Step[] {
-  const locationSplit = location.pathname.split('/')
-  const tutorialName = locationSplit[2]
-  const context = require.context('@site/tutorials/', true)
-
-  // Filter to ones that are in the `tutorialname` dir
-  const steps = context
-    .keys()
-    .filter((key) => key.includes(tutorialName) && key.endsWith('md'))
-    .map((key) => [key, context(key)])
-    .map(([path, mdFile]) => Step.parse({ ...mdFile.frontMatter, path }))
-
-  steps.sort((a, b) => a.position - b.position)
-
-  return steps
-}
-
-function getPrev(location: Location): Step | null {
-  const steps = getSteps(location)
-  const asPath = steps.map((step) => stepToHistory(step))
-  const current = asPath.findIndex((path) => {
+function getCurrentStep(location: Location, steps: Steps[]): Step | null {
+  const current = steps.findIndex((path) => {
     return location.pathname == path || location.pathname == path + '/'
   })
   if (current === -1) {
     return null
   }
+  return steps[current]
+}
+
+function getPrev(location: Location, meta: Meta): Step | null {
+  if (!meta) {
+    return null
+  }
+
+  const steps = getSteps(meta.id)
+  const current = getCurrentStep(location, steps)
+
+  if (!current) {
+    return null
+  }
 
   if (current > 0) {
     const ret = steps[current - 1]
-    ret.path = stepToHistory(ret)
     return ret
   }
 
   return null
 }
 
-function getNext(location: Location): Step | null {
-  const steps = getSteps(location)
-  const asPath = steps.map((step) => stepToHistory(step))
-  const current = asPath.findIndex((path) => {
-    return location.pathname == path || location.pathname == path + '/'
-  })
+function getNext(location: Location, meta?: Meta): Step | null {
+  if (!meta) {
+    return null
+  }
+
+  const steps = getSteps(meta.id)
+  const current = getCurrentStep(location, steps)
 
   if (current === -1) {
     return null
@@ -83,140 +80,17 @@ function getNext(location: Location): Step | null {
 
   if (current + 1 < steps.length) {
     const ret = steps[current + 1]
-    ret.path = stepToHistory(ret)
     return ret
   }
 
   return null
 }
 
-function Paginators({
-  next,
-  prev,
-  setActiveStep,
-  isMobile = false,
-}: {
-  next: Step | null
-  prev: Step | null
-  setActiveStep: (step: Step) => void
-  isMobile: boolean
-}): JSX.Element {
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        width: '100%',
-        justifyContent: 'space-between',
-      }}
-    >
-      <Grid
-        justifyContent="space-between"
-        direction={isMobile ? 'column' : 'row'}
-        container
-        columnSpacing={2}
-      >
-        <Grid item xs={6}>
-          {prev ? (
-            <PaginatorNavLink
-              onClick={() => setActiveStep(prev)}
-              isNext={false}
-              permalink={prev.path}
-              title={prev.title}
-              subLabel="Previous"
-            />
-          ) : (
-            // Zero width element so space-between aligns right correctly if there is no previous
-            <></>
-          )}
-        </Grid>
-
-        {next && (
-          <Grid item xs={6}>
-            <PaginatorNavLink
-              onClick={() => setActiveStep(next)}
-              isNext={true}
-              permalink={next.path}
-              title={next.title}
-              subLabel="Next"
-            />
-          </Grid>
-        )}
-      </Grid>
-      {!isMobile && <Box className="col col--3"></Box>}
-    </Box>
-  )
-}
-
-export default function DocPageLayoutMain({
+function DefaultDocPageLayout({
   hiddenSidebarContainer,
   children,
 }: Props): JSX.Element {
   const sidebar = useDocsSidebar()
-  const location = useLocation()
-  const isTutorial = useIsTutorial()
-
-  const [steps, setSteps] = React.useState(() =>
-    isTutorial ? getSteps(location) : []
-  )
-
-  const [activeStep, setActiveStep] = React.useState<Step>(() => {
-    const locationSplit = location.pathname.split('/')
-    const stepName = locationSplit[locationSplit.length - 1].replace('.md', '')
-    const step = steps.find((step) => step.path.includes(stepName))
-
-    if (!step) {
-      return steps[0]
-    }
-
-    return step
-  })
-
-  const [meta, setMeta] = useState<Meta | null>(null)
-  const [next, setNext] = useState<Step | null>(null)
-  const [prev, setPrev] = useState<Step | null>(null)
-  const isMobile = useIsMobile()
-
-  useEffect(() => {
-    if (!isTutorial) return
-    setMeta(getMeta(location))
-    setSteps(getSteps(location))
-    setNext(getNext(location))
-    setPrev(getPrev(location))
-  }, [location])
-
-  if (isTutorial) {
-    return (
-      <main
-        className={clsx(
-          styles.docMainContainer,
-          (hiddenSidebarContainer || !sidebar) &&
-            styles.docMainContainerEnhanced
-        )}
-      >
-        {isMobile ? (
-          <Mobile
-            children={children}
-            meta={meta}
-            steps={steps}
-            activeStep={activeStep}
-            setActiveStep={setActiveStep}
-            next={next}
-            prev={prev}
-          />
-        ) : (
-          <Desktop
-            children={children}
-            meta={meta}
-            steps={steps}
-            activeStep={activeStep}
-            setActiveStep={setActiveStep}
-            next={next}
-            prev={prev}
-          />
-        )}
-      </main>
-    )
-  }
   return (
     <main
       className={clsx(
@@ -235,6 +109,138 @@ export default function DocPageLayoutMain({
       </div>
     </main>
   )
+}
+
+function TutorialHomeDocPageLayout({
+  hiddenSidebarContainer,
+  children,
+}: Props): JSX.Element {
+  const sidebar = useDocsSidebar()
+
+  useEffect(() => {
+    const footers = document.getElementsByTagName('footer')
+    footers[0].style.display = 'none'
+    footers[1].style.display = 'none'
+  }, [])
+
+  return (
+    <main
+      className={clsx(
+        styles.docMainContainer,
+        (hiddenSidebarContainer || !sidebar) && styles.docMainContainerEnhanced
+      )}
+    >
+      <div
+        className={clsx(
+          'container padding-top--md padding-bottom--lg',
+          styles.docItemWrapper,
+          hiddenSidebarContainer && styles.docItemWrapperEnhanced
+        )}
+      >
+        {children}
+      </div>
+    </main>
+  )
+}
+
+function TutorialDocPageLayout({ hiddenSidebarContainer, children }: Props) {
+  const sidebar = useDocsSidebar()
+  const location = useLocation()
+  const isMobile = useIsMobile()
+
+  const [meta, setMeta] = useState<Meta | null>(null)
+  const [next, setNext] = useState<Step | null>(null)
+  const [prev, setPrev] = useState<Step | null>(null)
+  const [steps, setSteps] = useState<Step[]>([])
+  const [activeStep, setActiveStep] = useState<Step | null>(null)
+
+  useEffect(() => {
+    setMeta(getMeta(location))
+    setSteps(getSteps(location))
+  }, [location])
+
+  useEffect(() => {
+    setNext(getNext(location, meta))
+    setPrev(getPrev(location, meta))
+  }, [location, meta])
+
+  useEffect(() => {
+    if (meta) {
+      setSteps(getSteps(meta.id))
+    }
+  }, [meta])
+
+  useEffect(() => {
+    const stepName = location.pathname.split('/').pop()
+    const step = steps.find((step) => step.path.includes(stepName))
+
+    if (!step) {
+      setActiveStep(steps[0])
+    }
+
+    setActiveStep(step)
+  }, [steps])
+
+  return (
+    <main
+      className={clsx(
+        styles.docMainContainer,
+        (hiddenSidebarContainer || !sidebar) && styles.docMainContainerEnhanced
+      )}
+    >
+      {isMobile ? (
+        <Mobile
+          children={children}
+          meta={meta}
+          steps={steps}
+          activeStep={activeStep}
+          setActiveStep={setActiveStep}
+          next={next}
+          prev={prev}
+        />
+      ) : (
+        <Desktop
+          children={children}
+          meta={meta}
+          steps={steps}
+          activeStep={activeStep}
+          setActiveStep={setActiveStep}
+          next={next}
+          prev={prev}
+        />
+      )}
+    </main>
+  )
+}
+
+export default function DocPageLayoutMain({
+  hiddenSidebarContainer,
+  children,
+}: Props): JSX.Element {
+  const tutorial = useTutorial()
+
+  if (tutorial === TutorialKind.Tutorial) {
+    return (
+      <TutorialDocPageLayout
+        hiddenSidebarContainer={hiddenSidebarContainer}
+        children={children}
+      />
+    )
+  } else if (tutorial === TutorialKind.Home) {
+    return (
+      <TutorialHomeDocPageLayout
+        hiddenSidebarContainer={hiddenSidebarContainer}
+        children={children}
+      />
+    )
+  } else {
+    return (
+      <DefaultDocPageLayout
+        hiddenSidebarContainer={hiddenSidebarContainer}
+        children={children}
+      />
+    )
+  }
 }
 
 function Mobile({
@@ -330,8 +336,9 @@ function Desktop({
             margin-top: 3rem
           }
 
-          .theme-doc-footer-edit-meta-row {
+          .theme-doc-footer {
             display: none;
+            margin-top: 0;
           }
       `,
         }}

@@ -67,7 +67,6 @@ module.exports = {
   ],
 
   plugins: [
-    path.resolve(__dirname, 'plugins', 'tutorialPlugin'),
     [
       '@docusaurus/plugin-content-docs',
       {
