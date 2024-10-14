@@ -526,3 +526,16 @@ fieldset {
     display: none;
   }
 }
+
+/* 
+Prevents the indicator on the Docs / Tutorials & Guides tabs from being hidden by overflow: hidden
+ */
+.desktop-only > .MuiTabs-scroller {
+  overflow: visible !important;
+  overflow-x: visible !important;
+}
+
+.mobile-only > .MuiTabs-scroller {
+  overflow: visible !important;
+  overflow-x: visible !important;
+}

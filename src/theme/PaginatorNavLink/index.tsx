@@ -3,8 +3,9 @@ import clsx from 'clsx'
 import Link from '@docusaurus/Link'
 import type { Props } from '@theme/PaginatorNavLink'
 
+// This adds the `onClick` prop to the `PaginatorNavLink` component
 export default function PaginatorNavLink(
-  props: Props & { onClick: () => void }
+  props: Props & { onClick?: () => void }
 ): JSX.Element {
   const { permalink, title, subLabel, isNext, onClick } = props
   return (

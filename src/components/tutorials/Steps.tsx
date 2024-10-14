@@ -17,7 +17,7 @@ import {
   Typography,
 } from '@mui/material'
 
-import { Step } from '../models'
+import { Step } from './models'
 
 function ListIcon({
   selfPosition,

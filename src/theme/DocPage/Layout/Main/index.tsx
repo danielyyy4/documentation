@@ -10,11 +10,13 @@ import type { Props } from '@theme/DocPage/Layout/Main'
 import { useDocsSidebar } from '@docusaurus/theme-common/internal'
 
 import styles from './styles.module.css'
-import { Header } from '../../../../components/tutorials/Tutorial'
-import { Meta, Step } from '../../../../components/tutorials/models'
-import Steps, { stepToHistory } from '../../../../components/tutorials/Steps'
-
-import { useWindowSize } from '@docusaurus/theme-common'
+import { Header } from '@site/src/components/tutorials/Header'
+import { Meta, Step } from '@site/src/components/tutorials/models'
+import {
+  useIsMobile,
+  useIsTutorial,
+} from '@site/src/components/tutorials/utils'
+import Steps, { stepToHistory } from '@site/src/components/tutorials/Steps'
 
 function getMeta(location: Location): Meta {
   const locationSplit = location.pathname.split('/')
@@ -151,12 +153,12 @@ export default function DocPageLayoutMain({
 }: Props): JSX.Element {
   const sidebar = useDocsSidebar()
   const location = useLocation()
-  const [isTutorial, setIsTutorial] = React.useState(() =>
-    location.pathname.startsWith('/tutorials')
-  )
+  const isTutorial = useIsTutorial()
+
   const [steps, setSteps] = React.useState(() =>
     isTutorial ? getSteps(location) : []
   )
+
   const [activeStep, setActiveStep] = React.useState<Step>(() => {
     const locationSplit = location.pathname.split('/')
     const stepName = locationSplit[locationSplit.length - 1].replace('.md', '')
@@ -168,19 +170,11 @@ export default function DocPageLayoutMain({
 
     return step
   })
+
   const [meta, setMeta] = useState<Meta | null>(null)
   const [next, setNext] = useState<Step | null>(null)
   const [prev, setPrev] = useState<Step | null>(null)
-  const windowSize = useWindowSize()
-  const [isMobile, setIsMobile] = useState(windowSize === 'mobile')
-
-  useEffect(() => {
-    setIsMobile(windowSize === 'mobile')
-  }, [windowSize])
-
-  useEffect(() => {
-    setIsTutorial(location.pathname.startsWith('/tutorials'))
-  }, [location])
+  const isMobile = useIsMobile()
 
   useEffect(() => {
     if (!isTutorial) return
@@ -364,6 +358,7 @@ function Desktop({
                 next={next}
                 prev={prev}
                 setActiveStep={setActiveStep}
+                isMobile={false}
               />
             </Grid>
           </Grid>

@@ -2,7 +2,6 @@ import React, { SyntheticEvent, useEffect, useState } from 'react'
 
 import { Tab, Tabs } from '@mui/material'
 import { useHistory, useLocation } from '@docusaurus/router'
-import { useWindowSize } from '@docusaurus/theme-common'
 
 enum DocsTab {
   Docs = '/docs',
@@ -19,12 +18,6 @@ export function DocsTutorialsTabsMobile(): JSX.Element {
   const history = useHistory()
   const location = useLocation()
 
-  const windowSize = useWindowSize()
-  const [isMobile, setIsMobile] = useState(windowSize === 'mobile')
-
-  useEffect(() => {
-    setIsMobile(windowSize === 'mobile')
-  }, [windowSize])
   const [tab, setTab] = useState<DocsTab>(() =>
     getCurrentTab(location.pathname)
   )
@@ -58,13 +51,6 @@ export function DocsTutorialsTabsMobile(): JSX.Element {
         },
       }}
     >
-      {/* I can't find a way to style the scroller from the API provided, so we must resort to this */}
-      <style
-        dangerouslySetInnerHTML={{
-          __html:
-            '.MuiTabs-scroller { overflow: visible !important; overflow-x: visible !important; }',
-        }}
-      />
       <Tab value={DocsTab.Docs} label="Docs" sx={{ textTransform: 'none' }} />
       <Tab
         value={DocsTab.Tutorials}
@@ -79,12 +65,6 @@ export function DocsTutorialsTabsDesktop(): JSX.Element {
   const history = useHistory()
   const location = useLocation()
 
-  const windowSize = useWindowSize()
-  const [isMobile, setIsMobile] = useState(windowSize === 'mobile')
-
-  useEffect(() => {
-    setIsMobile(windowSize === 'mobile')
-  }, [windowSize])
   const [tab, setTab] = useState<DocsTab>(() =>
     getCurrentTab(location.pathname)
   )
@@ -117,13 +97,6 @@ export function DocsTutorialsTabsDesktop(): JSX.Element {
         },
       }}
     >
-      {/* I can't find a way to style the scroller from the API provided, so we must resort to this */}
-      <style
-        dangerouslySetInnerHTML={{
-          __html:
-            '.MuiTabs-scroller { overflow: visible !important; overflow-x: visible !important; }',
-        }}
-      />
       <Tab value={DocsTab.Docs} label="Docs" sx={{ textTransform: 'none' }} />
       <Tab
         value={DocsTab.Tutorials}

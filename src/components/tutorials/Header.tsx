@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 
 import { Breadcrumbs, Grid, Typography } from '@mui/material'
 
-import { Topic } from '../TutorialList/styledComponents'
+import { Topic } from './TutorialList/styledComponents'
 
 export function Header({ title, label }: { title: string; label: string }) {
   return (

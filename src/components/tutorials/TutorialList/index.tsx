@@ -24,11 +24,10 @@ import {
   Description,
   shadow,
   StartButton,
-  Title,
   Topic,
 } from './styledComponents'
 
-import { useWindowSize } from '@docusaurus/theme-common'
+import { useIsMobile } from '../utils'
 
 function TutorialCard({ tutorial }: { tutorial: Tutorial }) {
   const history = useHistory()
@@ -111,13 +110,7 @@ function TutorialList({
   const [search, setSearch] = useState('')
   const [topic, setTopic] = useState<TopicDropdown>('All topics')
   const [parsedTutorials, setParsedTutorials] = useState<Tutorial[]>([])
-  const windowSize = useWindowSize()
-  const [isMobile, setIsMobile] = useState(windowSize === 'mobile')
-
-  useEffect(() => {
-    setIsMobile(windowSize === 'mobile')
-    console.log(isMobile)
-  }, [windowSize])
+  const isMobile = useIsMobile()
 
   useEffect(() => {
     setParsedTutorials(
@@ -173,20 +166,20 @@ function MobileTutorialList({
 }) {
   return (
     <Layout>
-      <Box>
-        <Grid container direction="column">
+      <Box sx={{ mt: 1 }}>
+        <Grid container direction="column" rowSpacing={2}>
           <SearchBar setSearch={setSearch} />
           <TopicFilter topic={topic} setTopic={setTopic} />
-        </Grid>
 
-        <TutorialGrid mb={2}>
           {parsedTutorials
             .filter((tutorial: Tutorial) => searchFilter(search, tutorial))
             .filter((tutorial: Tutorial) => topicFilter(topic, tutorial))
             .map((tutorial: Tutorial) => (
-              <TutorialCard key={tutorial.meta.id} tutorial={tutorial} />
+              <Grid item>
+                <TutorialCard key={tutorial.meta.id} tutorial={tutorial} />
+              </Grid>
             ))}
-        </TutorialGrid>
+        </Grid>
       </Box>
     </Layout>
   )
