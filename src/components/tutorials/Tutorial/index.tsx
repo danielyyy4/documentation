@@ -8,16 +8,16 @@ import { Topic } from '../TutorialList/styledComponents'
 
 export function Header({ title, label }: { title: string; label: string }) {
   return (
-    <Grid container direction="column" rowSpacing={0} sx={{ mb: 2 }}>
+    <Grid container direction="column" rowSpacing={0}>
       <Grid item>
         <Breadcrumbs>
           <Link to="/tutorials">Tutorials & Guides</Link>
           <Typography>{title}</Typography>
         </Breadcrumbs>
       </Grid>
-      <Grid item container alignItems="center" columnSpacing={2}>
+      <Grid item container alignItems="center" columnSpacing={2} sx={{ mb: 3 }}>
         <Grid item>
-          <Typography variant="h4" sx={{ fontSize: '28px', mt: 1 }}>
+          <Typography variant="h4" sx={{ fontSize: '28px' }}>
             {title}
           </Typography>
         </Grid>
