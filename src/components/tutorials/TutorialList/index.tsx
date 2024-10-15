@@ -94,7 +94,8 @@ function TutorialCard({ tutorial }: { tutorial: Tutorial }) {
 
 function searchFilter(term: string, tutorial?: Tutorial): boolean {
   return tutorial
-    ? tutorial?.meta.title.toLowerCase().includes(term.toLowerCase())
+    ? tutorial?.meta.title.toLowerCase().includes(term.toLowerCase()) ||
+        tutorial?.meta.description.toLowerCase().includes(term.toLowerCase())
     : false
 }
 
