@@ -18,7 +18,7 @@ import { Paginators } from './Paginators'
 import { TutorialKind } from '../../../../components/tutorials/hooks'
 
 function getMeta(location: Location): Meta {
-  const [_, __, id] = location.pathname.split('/')
+  const [_root, _tutorials, id] = location.pathname.split('/')
   const context = require.context('@site/tutorials/', true)
 
   try {
@@ -32,11 +32,7 @@ function getMeta(location: Location): Meta {
   }
 }
 
-function getPrev(steps: Steps, activeStep?: Step): Step | null {
-  if (!activeStep) {
-    return null
-  }
-
+function getPrev(steps: Steps, activeStep: Step): Step | null {
   const current = steps.indexOf(activeStep)
   if (current === 0) {
     return null
@@ -45,11 +41,7 @@ function getPrev(steps: Steps, activeStep?: Step): Step | null {
   return steps[current - 1]
 }
 
-function getNext(steps: Steps, activeStep?: Step): Step | null {
-  if (!activeStep) {
-    return null
-  }
-
+function getNext(steps: Steps, activeStep: Step): Step | null {
   const current = steps.indexOf(activeStep)
   if (current === steps.length - 1) {
     return null
@@ -123,8 +115,10 @@ function TutorialDocPageLayout({ hiddenSidebarContainer, children }: Props) {
   }, [])
 
   useEffect(() => {
-    setNext(getNext(steps, activeStep))
-    setPrev(getPrev(steps, activeStep))
+    if (activeStep) {
+      setNext(getNext(steps, activeStep))
+      setPrev(getPrev(steps, activeStep))
+    }
   }, [activeStep, steps])
 
   return (
