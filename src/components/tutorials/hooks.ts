@@ -24,13 +24,12 @@ export function useTutorial(): TutorialKind {
   const location = useLocation()
 
   const isTutorial = useMemo(() => {
-    const [_, a, b, c] = location.pathname.split('/')
-    console.log(a, b, c)
-    if (a === 'tutorials' && b === undefined) {
+    const [root, first, ..._rest] = location.pathname.split('/').filter(Boolean)
+    if (root === 'tutorials' && first === undefined) {
       return TutorialKind.TutorialHome
-    } else if (a === 'tutorials' && b !== undefined) {
+    } else if (root === 'tutorials' && first !== undefined) {
       return TutorialKind.Tutorial
-    } else if (a === 'docs') {
+    } else if (root === 'docs') {
       return TutorialKind.Docs
     } else {
       return TutorialKind.Unknown

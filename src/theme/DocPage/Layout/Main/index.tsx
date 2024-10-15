@@ -18,7 +18,7 @@ import { Paginators } from './Paginators'
 import { TutorialKind } from '../../../../components/tutorials/hooks'
 
 function getMeta(location: Location): Meta {
-  const [_root, _tutorials, id] = location.pathname.split('/')
+  const [root, id] = location.pathname.split('/').filter(Boolean)
   const context = require.context('@site/tutorials/', true)
 
   try {
@@ -26,6 +26,9 @@ function getMeta(location: Location): Meta {
     meta['id'] = id
     return Meta.parse(meta)
   } catch (e) {
+    if (root === 'tutorials' && id === undefined) {
+      return {}
+    }
     throw new Error(
       `Could not find meta.json for tutorial ${id}, location: ${location.pathname}`
     )
