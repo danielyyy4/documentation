@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react'
 
-import Layout from '@theme/Layout'
 import Link from '@docusaurus/Link'
 import { grey } from '@mui/material/colors'
 import { useHistory } from '@docusaurus/router'
@@ -16,6 +15,8 @@ import {
   Typography,
 } from '@mui/material'
 
+import { useIsMobile } from '../hooks'
+import { getMetaData, getSteps } from '../utils'
 import { Grid as TutorialGrid } from './styledComponents'
 import { Meta, Topic as TopicType, Tutorial } from '../models'
 import {
@@ -25,9 +26,6 @@ import {
   StartButton,
   Topic,
 } from './styledComponents'
-
-import { getMetaData, getSteps } from '../utils'
-import { useIsMobile } from '../hooks'
 
 function TutorialCard({ tutorial }: { tutorial: Tutorial }) {
   const history = useHistory()

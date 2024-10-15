@@ -26,7 +26,6 @@ export function getMetaData(): Meta[] {
 
 // Get the sorted steps for a tutorial with the given id
 export function getSteps(id: string): Step[] {
-  console.log(id)
   const context = require.context('@site/tutorials/', true)
 
   // Filter to ones that are in the `tutorialname` dir

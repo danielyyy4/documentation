@@ -14,6 +14,7 @@ import type { Props } from '@theme/DocItem/Layout'
 
 import styles from './styles.module.css'
 import { Paper } from '@mui/material'
+
 import { useTutorial, TutorialKind } from '@site/src/components/tutorials/hooks'
 
 /**

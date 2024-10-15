@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react'
 
 import { useTheme } from '@emotion/react'
 import { grey } from '@mui/material/colors'
-import { useHistory, useLocation } from '@docusaurus/router'
+import { useHistory } from '@docusaurus/router'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCheckCircle, faCircle } from '@fortawesome/free-regular-svg-icons'
 import {
