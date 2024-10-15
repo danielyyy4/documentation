@@ -27,21 +27,40 @@ import {
   Topic,
 } from './styledComponents'
 
+function getFirstStepPath(meta: Meta): string | null {
+  const steps = getSteps(meta.id)
+  if (steps.length === 0) {
+    return null
+  }
+  return steps[0].path
+}
+
 function TutorialCard({ tutorial }: { tutorial: Tutorial }) {
   const history = useHistory()
+  const firstStep = getFirstStepPath(tutorial.meta)
+
   return (
     <Card>
       <Grid container direction="column" justifyContent="space-between">
         <Grid item container direction="column">
           <Grid item>
-            <Link
-              style={{ color: 'inherit', cursor: 'pointer' }}
-              to={getSteps(tutorial.meta.id)[0].path}
-            >
-              <Typography variant="h5" sx={{ fontSize: '18px', mb: 1 }}>
-                {tutorial.meta.title}
+            {firstStep ? (
+              <Link
+                style={{ color: 'inherit', cursor: 'pointer' }}
+                to={firstStep}
+              >
+                <Typography variant="h5" sx={{ fontSize: '18px', mb: 1 }}>
+                  {tutorial.meta.title}
+                </Typography>
+              </Link>
+            ) : (
+              <Typography
+                variant="h5"
+                sx={{ fontSize: '18px', mb: 1, color: 'red' }}
+              >
+                {tutorial.meta.title} (No steps found)
               </Typography>
-            </Link>
+            )}
           </Grid>
           <Grid item>
             <Topic label={tutorial.meta.label} sx={{ mb: 2 }}></Topic>
@@ -52,6 +71,7 @@ function TutorialCard({ tutorial }: { tutorial: Tutorial }) {
         </Grid>
         <Grid item>
           <StartButton
+            disabled={!firstStep}
             onClick={() => {
               const steps = getSteps(tutorial.meta.id)
               const first = steps[0]
@@ -174,7 +194,7 @@ function DesktopTutorialList({
   parsedTutorials,
 }) {
   return (
-    <Box marginX={8} marginY={3}>
+    <Box marginX={8} marginY={3} minWidth="90vw">
       <Grid container columnSpacing={2}>
         <SearchBar setSearch={setSearch} />
         <TopicFilter topic={topic} setTopic={setTopic} />
