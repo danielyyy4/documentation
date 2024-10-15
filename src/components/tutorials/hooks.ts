@@ -1,47 +1,41 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { useWindowSize } from '@docusaurus/theme-common'
 import { useLocation } from '@docusaurus/router'
 
-export function useIsMobile() {
+export function useIsMobile(): boolean {
   const windowSize = useWindowSize()
-  const check = () => windowSize === 'mobile'
 
-  const [isMobile, setIsMobile] = useState(() => check())
-
-  useEffect(() => {
-    setIsMobile(check())
+  const isMobile = useMemo(() => {
+    return windowSize === 'mobile'
   }, [windowSize])
 
   return isMobile
 }
 
 export enum TutorialKind {
-  Home = 'home',
+  TutorialHome = 'tutorial-home',
   Tutorial = 'tutorial',
+  Docs = 'docs',
   Unknown = 'unknown',
 }
 
 export function useTutorial(): TutorialKind {
   const location = useLocation()
-  const check = () => {
-    const isHomepage = location.pathname === '/tutorials'
-    const isTutorial = location.pathname.includes('/tutorials/')
 
-    if (isHomepage) {
-      return TutorialKind.Home
-    } else if (isTutorial) {
+  const isTutorial = useMemo(() => {
+    const [_, a, b, c] = location.pathname.split('/')
+    console.log(a, b, c)
+    if (a === 'tutorials' && b === undefined) {
+      return TutorialKind.TutorialHome
+    } else if (a === 'tutorials' && b !== undefined) {
       return TutorialKind.Tutorial
+    } else if (a === 'docs') {
+      return TutorialKind.Docs
     } else {
       return TutorialKind.Unknown
     }
-  }
-
-  const [isTutorial, setIsTutorial] = useState(() => check())
-
-  useEffect(() => {
-    setIsTutorial(check())
-  }, [location])
+  }, [location.pathname])
 
   return isTutorial
 }
