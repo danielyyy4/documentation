@@ -1,4 +1,4 @@
-import React, { ReactNode, useEffect, useState } from 'react'
+import React, { ReactNode, Suspense, useEffect, useMemo, useState } from 'react'
 
 import clsx from 'clsx'
 import { Location } from 'history'
@@ -8,9 +8,9 @@ import { useLocation } from '@docusaurus/router'
 import type { Props } from '@theme/DocPage/Layout/Main'
 import Steps from '@site/src/components/tutorials/Steps'
 import { Header } from '@site/src/components/tutorials/Header'
+import { getSteps } from '@site/src/components/tutorials/utils'
 import { useDocsSidebar } from '@docusaurus/theme-common/internal'
 import { Meta, Step } from '@site/src/components/tutorials/models'
-import { getSteps } from '@site/src/components/tutorials/utils'
 import { useIsMobile, useTutorial } from '@site/src/components/tutorials/hooks'
 
 import styles from './styles.module.css'
@@ -26,64 +26,35 @@ function getMeta(location: Location): Meta {
     meta['id'] = id
     return Meta.parse(meta)
   } catch (e) {
-    if (location.pathname === '/tutorials') {
-      return null
-    }
-
     throw new Error(
       `Could not find meta.json for tutorial ${id}, location: ${location.pathname}`
     )
   }
 }
 
-function getCurrentStep(location: Location, steps: Steps[]): Step | null {
-  const current = steps.findIndex((path) => {
-    return location.pathname == path || location.pathname == path + '/'
-  })
-  if (current === -1) {
+function getPrev(steps: Steps, activeStep?: Step): Step | null {
+  if (!activeStep) {
     return null
   }
-  return steps[current]
+
+  const current = steps.indexOf(activeStep)
+  if (current === 0) {
+    return null
+  }
+
+  return steps[current - 1]
 }
 
-function getPrev(location: Location, meta: Meta): Step | null {
-  if (!meta) {
+function getNext(steps: Steps, activeStep?: Step): Step | null {
+  if (!activeStep) {
     return null
   }
 
-  const steps = getSteps(meta.id)
-  const current = getCurrentStep(location, steps)
-
-  if (!current) {
+  const current = steps.indexOf(activeStep)
+  if (current === steps.length - 1) {
     return null
   }
-
-  if (current > 0) {
-    const ret = steps[current - 1]
-    return ret
-  }
-
-  return null
-}
-
-function getNext(location: Location, meta?: Meta): Step | null {
-  if (!meta) {
-    return null
-  }
-
-  const steps = getSteps(meta.id)
-  const current = getCurrentStep(location, steps)
-
-  if (current === -1) {
-    return null
-  }
-
-  if (current + 1 < steps.length) {
-    const ret = steps[current + 1]
-    return ret
-  }
-
-  return null
+  return steps[current + 1]
 }
 
 function DefaultDocPageLayout({
@@ -130,15 +101,7 @@ function TutorialHomeDocPageLayout({
         (hiddenSidebarContainer || !sidebar) && styles.docMainContainerEnhanced
       )}
     >
-      <div
-        className={clsx(
-          'container padding-top--md padding-bottom--lg',
-          styles.docItemWrapper,
-          hiddenSidebarContainer && styles.docItemWrapperEnhanced
-        )}
-      >
-        {children}
-      </div>
+      {children}
     </main>
   )
 }
@@ -148,38 +111,21 @@ function TutorialDocPageLayout({ hiddenSidebarContainer, children }: Props) {
   const location = useLocation()
   const isMobile = useIsMobile()
 
-  const [meta, setMeta] = useState<Meta | null>(null)
+  const meta = useMemo<Meta>(() => getMeta(location), [location])
+  const steps = useMemo<Step[]>(() => getSteps(meta.id), [meta.id])
+
+  const [activeStep, setActiveStep] = useState<Step | null>(null)
   const [next, setNext] = useState<Step | null>(null)
   const [prev, setPrev] = useState<Step | null>(null)
-  const [steps, setSteps] = useState<Step[]>([])
-  const [activeStep, setActiveStep] = useState<Step | null>(null)
 
   useEffect(() => {
-    setMeta(getMeta(location))
-    setSteps(getSteps(location))
-  }, [location])
+    setActiveStep(steps[0])
+  }, [])
 
   useEffect(() => {
-    setNext(getNext(location, meta))
-    setPrev(getPrev(location, meta))
-  }, [location, meta])
-
-  useEffect(() => {
-    if (meta) {
-      setSteps(getSteps(meta.id))
-    }
-  }, [meta])
-
-  useEffect(() => {
-    const stepName = location.pathname.split('/').pop()
-    const step = steps.find((step) => step.path.includes(stepName))
-
-    if (!step) {
-      setActiveStep(steps[0])
-    }
-
-    setActiveStep(step)
-  }, [steps])
+    setNext(getNext(steps, activeStep))
+    setPrev(getPrev(steps, activeStep))
+  }, [activeStep, steps])
 
   return (
     <main
@@ -219,27 +165,35 @@ export default function DocPageLayoutMain({
 }: Props): JSX.Element {
   const tutorial = useTutorial()
 
-  if (tutorial === TutorialKind.Tutorial) {
-    return (
-      <TutorialDocPageLayout
-        hiddenSidebarContainer={hiddenSidebarContainer}
-        children={children}
-      />
-    )
-  } else if (tutorial === TutorialKind.Home) {
-    return (
-      <TutorialHomeDocPageLayout
-        hiddenSidebarContainer={hiddenSidebarContainer}
-        children={children}
-      />
-    )
-  } else {
-    return (
-      <DefaultDocPageLayout
-        hiddenSidebarContainer={hiddenSidebarContainer}
-        children={children}
-      />
-    )
+  switch (tutorial) {
+    case TutorialKind.Tutorial:
+      return (
+        <TutorialDocPageLayout
+          hiddenSidebarContainer={hiddenSidebarContainer}
+          children={children}
+        />
+      )
+    case TutorialKind.TutorialHome:
+      return (
+        <TutorialHomeDocPageLayout
+          hiddenSidebarContainer={hiddenSidebarContainer}
+          children={children}
+        />
+      )
+    case TutorialKind.Docs:
+      return (
+        <DefaultDocPageLayout
+          hiddenSidebarContainer={hiddenSidebarContainer}
+          children={children}
+        />
+      )
+    default:
+      return (
+        <DefaultDocPageLayout
+          hiddenSidebarContainer={hiddenSidebarContainer}
+          children={children}
+        />
+      )
   }
 }
 
@@ -318,7 +272,7 @@ function Desktop({
   children: ReactNode
   meta: Meta | null
   steps: Step[]
-  activeStep: Step
+  activeStep: Step | null
   setActiveStep: (step: Step) => void
   next: Step | null
   prev: Step | null
@@ -357,7 +311,7 @@ function Desktop({
                 setActiveStep={setActiveStep}
               />
             </Grid>
-            <Grid item container>
+            <Grid container item>
               <Grid sx={{ width: '100%' }} item>
                 {children}
               </Grid>
