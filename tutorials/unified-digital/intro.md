@@ -1,5 +1,4 @@
 ---
-id: intro
 title: Introduction
 position: 1
 ---
