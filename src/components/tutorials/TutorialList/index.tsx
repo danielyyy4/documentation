@@ -41,7 +41,12 @@ function TutorialCard({ tutorial }: { tutorial: Tutorial }) {
 
   return (
     <Card>
-      <Grid container direction="column" justifyContent="space-between">
+      <Grid
+        container
+        direction="column"
+        sx={{ height: '100%' }}
+        justifyContent="space-between"
+      >
         <Grid item container direction="column">
           <Grid item>
             {firstStep ? (
