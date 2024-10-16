@@ -52,6 +52,17 @@ function getNext(steps: Steps, activeStep: Step): Step | null {
   return steps[current + 1]
 }
 
+function findStepFromLocation(location: Location, steps: Steps): Step | null {
+  const [root, _id, step] = location.pathname.split('/').filter(Boolean)
+  if (root === 'tutorials' && step) {
+    return steps.find((s) => {
+      const [_root, _step_id, step_step] = s.path.split('/').filter(Boolean)
+      return step === step_step
+    })
+  }
+  return null
+}
+
 function DefaultDocPageLayout({
   hiddenSidebarContainer,
   children,
@@ -114,7 +125,10 @@ function TutorialDocPageLayout({ hiddenSidebarContainer, children }: Props) {
   const [prev, setPrev] = useState<Step | null>(null)
 
   useEffect(() => {
-    setActiveStep(steps[0])
+    const step = findStepFromLocation(location, steps)
+    if (step) {
+      setActiveStep(step)
+    }
   }, [])
 
   useEffect(() => {
